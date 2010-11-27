@@ -4,19 +4,19 @@
 /*
 
 DCFileUploadManagerDelegate protocol
-- (void)fileUploadManagerDidChange:(DCFileUploadManager *)theManager;
+- (void)fileUploadManagerDidChange:(DCFileUploadManager)theManager;
 
 */
 
 SharedFileUploadManager = nil;
 
 @implementation DCFileUploadManager : CPObject {
-	CPArray *fileUploads @accessors;
+	CPArray fileUploads @accessors;
 	id delegate @accessors;
 	BOOL concurrent @accessors; // YES to make files upload at the same time.  NO (default) to upload one at a time.
 }
 
-+ (DCFileUploadManager *)sharedManager {
++ (DCFileUploadManager)sharedManager {
 	if (!SharedFileUploadManager) {
 		SharedFileUploadManager = [[DCFileUploadManager alloc] init];
 	}
@@ -29,7 +29,7 @@ SharedFileUploadManager = nil;
 	return self;
 }
 
-- (DCFileUpload *)fileUploadWithFile:(id)theFile uploadURL:(CPURL *)theURL {
+- (DCFileUpload)fileUploadWithFile:(id)theFile uploadURL:(CPURL)theURL {
 	var fileUpload = [[DCFileUpload alloc] initWithFile:theFile];
 	[fileUpload setDelegate:self];
 	[fileUpload setName:theFile.fileName];
@@ -54,20 +54,20 @@ SharedFileUploadManager = nil;
 	return NO;
 }
 
-- (void)removeFileUpload:(DCFileUpload *)theFileUpload {
+- (void)removeFileUpload:(DCFileUpload)theFileUpload {
 	[fileUploads removeObject:theFileUpload];
 	[self didChange];
 }
 
-- (void)fileUploadDidBegin:(DCFileUpload *)theFileUpload {
+- (void)fileUploadDidBegin:(DCFileUpload)theFileUpload {
 	[self didChange];
 }
 
-- (void)fileUploadProgressDidChange:(DCFileUpload *)theFileUpload {
+- (void)fileUploadProgressDidChange:(DCFileUpload)theFileUpload {
 	[self didChange];
 }
 
-- (void)fileUploadDidEnd:(DCFileUpload *)theFileUpload {
+- (void)fileUploadDidEnd:(DCFileUpload)theFileUpload {
 	if (!concurrent) {
 		// start the next one
 		var i = [fileUploads indexOfObject:theFileUpload] + 1;
@@ -76,6 +76,15 @@ SharedFileUploadManager = nil;
 		}
 	}
 	[self didChange];
+
+    if ([delegate respondsToSelector:@selector(fileUploadDidEnd:)])
+		[delegate fileUploadDidEnd:theFileUpload];
+}
+
+- (void)fileUpload:(DCFileUpload)anUpload didReceiveResponse:(CPString)aString
+{
+    if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
+		[delegate fileUpload:self didReceiveResponse:aString];
 }
 
 - (void)didChange {

@@ -35,17 +35,22 @@
 		[tableView addTableColumn:column];
 		[tableView setColumnAutoresizingStyle:CPTableViewLastColumnOnlyAutoresizingStyle];
 		[tableView setRowHeight:40.0];
-		[tableView setSelectionHighlightStyle:CPTableViewSelectionHighlightStyleNone];
+		//[tableView setSelectionHighlightStyle:CPTableViewSelectionHighlightStyleNone];
 
 		var scrollView = [[CPScrollView alloc] initWithFrame:CGRectMake(1, 1, 98, 98)];
 		[scrollView setDocumentView:tableView];
 		[scrollView setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
 		[scrollView setHasHorizontalScroller:NO];
-		//[scrollView setAutohidesScrollers:YES];
 
 		var view = [[CPView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
 		[view setBackgroundColor:[CPColor lightGrayColor]];
 		[view addSubview:scrollView];
+
+		var fileDropUploadController = [[DCFileDropController alloc] 
+			initWithView:tableView
+			dropDelegate:self 
+			uploadURL:[CPURL URLWithString:@"upload.php"] 
+			uploadManager:[DCFileUploadManager sharedManager]];
 	}
 	return self;
 }
@@ -65,5 +70,15 @@
 	return [list count];
 }
 
+
+// ******************** DCFileDropControllerDropDelegate *********************
+
+- (void)fileDropUploadController:(DCFileDropController)theController setState:(BOOL)visible {
+	if (visible) {
+		[tableView setBackgroundColor:[CPColor greenColor]];
+	} else {
+		[tableView setBackgroundColor:[CPColor whiteColor]];
+	}
+}
 
 @end

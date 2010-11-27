@@ -2,20 +2,17 @@
 @import "DCFileDropController.j"
 @import "DCFileUploadManager.j"
 
-@implementation DCFileDropRowView : CPView {
+@implementation DCFileDropCollectionViewItemView : CPView {
 	CPTextField nameField;
 }
 
 - (id)initWithFrame:(CGRect)theFrame {
 	self = [super initWithFrame:theFrame];
 
-	nameField = [[CPTextField alloc] initWithFrame:CGRectMake(
-		theFrame.origin.x + 10,
-		theFrame.origin.y,
-		theFrame.size.width - 20,
-		40)];
-	[nameField setAutoresizingMask:CPViewWidthSizable | CPViewMaxYMargin];
+	nameField = [[CPTextField alloc] initWithFrame:[self bounds]];
+	[nameField setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
 	[nameField setLineBreakMode:CPLineBreakByTruncatingTail];
+	[nameField setAlignment:CPCenterTextAlignment];
 	[nameField setVerticalAlignment:CPCenterVerticalTextAlignment];
 	[nameField setFont:[CPFont systemFontOfSize:12.0]];
     [nameField setValue:[CPColor whiteColor] forThemeAttribute:@"text-color" inState:CPThemeStateSelectedDataView];
@@ -24,19 +21,33 @@
 	return self;
 }
 
-- (void)setThemeState:(CPThemeState)aState
-{
+- (void)setSelected:(BOOL)isSelected {
+	if (isSelected) {
+		[self setThemeState:CPThemeStateSelected];
+	} else {
+		[self unsetThemeState:CPThemeStateSelected];
+	}
+}
+
+- (void)setThemeState:(CPThemeState)aState {
     [super setThemeState:aState];
     [nameField setThemeState:aState];
+	if (aState === CPThemeStateSelected) {
+		[self setBackgroundColor:[CPColor colorWithRed:0.356 green:0.557 blue:0.691 alpha:1.000]];
+		[nameField setTextColor:[CPColor whiteColor]];
+	}
 }
 
-- (void)unsetThemeState:(CPThemeState)aState
-{
+- (void)unsetThemeState:(CPThemeState)aState {
     [super unsetThemeState:aState];
     [nameField unsetThemeState:aState];
+	if (aState === CPThemeStateSelected) {
+		[self setBackgroundColor:[CPColor clearColor]];
+		[nameField setTextColor:[CPColor blackColor]];
+	}
 }
 
-- (void)setObjectValue:(Object)anObject {
+- (void)setRepresentedObject:(Object)anObject {
 	[nameField setStringValue:anObject];
 }
 

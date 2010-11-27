@@ -3,9 +3,16 @@
 /*
 
 DCFileDropControllerDropDelegate protocol
-- (void)fileDropUploadController:(DCFileDropController *)theController setState:(BOOL)visible;
+- (void)fileDropUploadController:(DCFileDropController)theController setState:(BOOL)visible;
 
 */
+
+DCFileDropableTargets = [ ];
+
+isWinSafari = false;
+if (navigator) {
+	isWinSafari = (navigator.userAgent.indexOf("Windows") > 0 && navigator.userAgent.indexOf("AppleWebKit") > 0) ? true : false ;
+}
 
 @implementation DCFileDropController : CPObject {
 	CPView view @accessors;
@@ -13,7 +20,7 @@ DCFileDropControllerDropDelegate protocol
 	CPURL uploadURL @accessors;
 	CPDictionary userInfo @accessors;
 
-	id fileInput;
+	DOMElement fileInput;
 	id iframeElement;
 	id dropDelegate;
 	id uploadDelegate @accessors;
@@ -21,7 +28,9 @@ DCFileDropControllerDropDelegate protocol
 	id domElement;
 	BOOL insertAsFirstSubview @accessors;
 	BOOL isButton @accessors;
-	BOOL useEmbeddedFileElement @accessors;
+	BOOL useIframeFileElement  @accessors;
+
+    CPArray validFileTypes @accessors;
 
 	id fileDroppedEventImplementation;
 	id fileDroppedEventCallback;
@@ -43,35 +52,23 @@ DCFileDropControllerDropDelegate protocol
 	return YES;
 }
 
-+ (BOOL)platformSupportsEmbeddedFileElement {
++ (BOOL)platformRequiresIframeElement {
 	if (![CPPlatform isBrowser]) {
 		// it's a NativeHost app, so we need to put the file element inside an iframe
-		return NO;
+		return YES;
 	}
-	return YES;
+	return NO;
 }
 
 - (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager {
-	return [self initWithView:theView domElement:theView._DOMElement dropDelegate:theDropDelegate uploadDelegate:nil uploadURL:theUploadURL uploadManager:theUploadManager];
+	return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:theUploadURL uploadManager:theUploadManager insertAsFirstSubview:NO];
 }
 
-- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager useEmbeddedFileElement:(BOOL)shouldUseEmbeddedFileElement {
-	return [self initWithView:theView domElement:theView._DOMElement dropDelegate:theDropDelegate uploadDelegate:nil uploadURL:theUploadURL uploadManager:theUploadManager useEmbeddedFileElement:shouldUseEmbeddedFileElement];
+- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager insertAsFirstSubview:(BOOL)shouldInsertAsFirstSubview {
+	return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:theUploadURL uploadManager:theUploadManager insertAsFirstSubview:shouldInsertAsFirstSubview useIframeFileElement:[DCFileDropController platformRequiresIframeElement]];
 }
 
-- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadDelegate:(id)theUploadDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager {
-	return [self initWithView:theView domElement:theView._DOMElement dropDelegate:theDropDelegate uploadDelegate:theUploadDelegate uploadURL:theUploadURL uploadManager:theUploadManager];
-}
-
-- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadDelegate:(id)theUploadDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager useEmbeddedFileElement:(BOOL)shouldUseEmbeddedFileElement {
-	return [self initWithView:theView domElement:theView._DOMElement dropDelegate:theDropDelegate uploadDelegate:theUploadDelegate uploadURL:theUploadURL uploadManager:theUploadManager useEmbeddedFileElement:shouldUseEmbeddedFileElement];
-}
-
-- (id)initWithView:(CPView)theView domElement:(id)theDomElement dropDelegate:(id)theDropDelegate uploadDelegate:(id)theUploadDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager {
-	return [self initWithView:theView domElement:theView._DOMElement dropDelegate:theDropDelegate uploadDelegate:theUploadDelegate uploadURL:theUploadURL uploadManager:theUploadManager useEmbeddedFileElement:[DCFileDropController platformSupportsEmbeddedFileElement]];
-}
-
-- (id)initWithView:(CPView)theView domElement:(id)theDomElement dropDelegate:(id)theDropDelegate uploadDelegate:(id)theUploadDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager useEmbeddedFileElement:(BOOL)shouldUseEmbeddedFileElement {
+- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager insertAsFirstSubview:(BOOL)shouldInsertAsFirstSubview useIframeFileElement:(BOOL)shouldUseIframeFileElement {
 	self = [super init];
 
 	view = theView;
@@ -80,33 +77,39 @@ DCFileDropControllerDropDelegate protocol
 	uploadDelegate = theUploadDelegate;
 	uploadURL = theUploadURL;
 	uploadManager = theUploadManager;
-	useEmbeddedFileElement = shouldUseEmbeddedFileElement;
+
+	insertAsFirstSubview = shouldInsertAsFirstSubview;
+	useIframeFileElement = shouldUseIframeFileElement;
 
 	[self setFileDropState:NO];
 
-	if (![DCFileDropController platformSupportsDeepDropUpload]) {
-		return self;
-	}
+	var theClass = [self class],
+	    dragEnterEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingEntered:)),
+	    dragEnterEventCallback = function (anEvent) {if (![self validateDraggedFiles:anEvent.dataTransfer.files]){return NO;}else{anEvent.dataTransfer.dropEffect = "copy"; anEvent.stopPropagation(); dragEnterEventImplementation(self, nil, anEvent);}},
+        bodyBlockCallback = function(anEvent){if (![DCFileDropableTargets containsObject:anEvent.toElement] || ([DCFileDropableTargets containsObject:anEvent.toElement] && ![self validateDraggedFiles:anEvent.dataTransfer.files])) {anEvent.dataTransfer.dropEffect = "none"; anEvent.preventDefault(); return NO;}else{return YES;}};
 
+	fileDroppedEventImplementation = class_getMethodImplementation(theClass, @selector(fileDropped:));
+	fileDroppedEventCallback = function (anEvent) { fileDroppedEventImplementation(self, nil, anEvent); };
+
+	dragExitEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingExited:));
+	dragExitEventCallback = function (anEvent) { dragExitEventImplementation(self, nil, anEvent); };
 
     // this prevents the little plus sign from showing up when you drag over the body.
     // Otherwise the user could be confused where they can drop the file and it would
     // cause the browser to redirect to the file they just dropped. 
-	//var bodyBlockCallback = function(anEvent){ anEvent.dataTransfer.dropEffect = "none"; return NO; };
-    //window.document.body.addEventListener("dragover", bodyBlockCallback, NO);
+    window.document.body.addEventListener("dragover", bodyBlockCallback, NO);
 
-	var theClass = [self class];
-	var dragEnterEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingEntered:));
-	var dragEnterEventCallback = function (anEvent) { anEvent.stopPropagation(); anEvent.preventDefault(); dragEnterEventImplementation(self, nil, anEvent); };
-	domElement.addEventListener("dragenter", dragEnterEventCallback, NO);
+	view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
 
-	fileDroppedEventImplementation = class_getMethodImplementation(theClass, @selector(fileDropped:));
-	fileDroppedEventCallback = function (anEvent) { anEvent.stopPropagation(); anEvent.preventDefault(); fileDroppedEventImplementation(self, nil, anEvent); };
-
-	dragExitEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingExited:));
-	dragExitEventCallback = function (anEvent) { anEvent.stopPropagation(); anEvent.preventDefault(); dragExitEventImplementation(self, nil, anEvent); };
-
-	if (useEmbeddedFileElement) {
+	if (useIframeFileElement) {
+		// in the NativeHost app, we need to put the fileInput element inside an iframe
+		iframeElement = document.createElement("iframe");
+		iframeElement.style.backgroundColor = "rgba(0,0,0,0)";
+		iframeElement.style.border = "0px";
+		iframeElement.style.zIndex = "101";
+		iframeElement.style.position = "absolute";
+		iframeElement.src = "about:blank";
+	} else {
 		fileInput = document.createElement("input");
 		fileInput.type = "file";
 		fileInput.id = "filesUpload";
@@ -116,23 +119,49 @@ DCFileDropControllerDropDelegate protocol
 		fileInput.style.backgroundColor = "#00FF00";
 		fileInput.style.opacity = "0";
 		if (!isWinSafari) {
+			// there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
 			fileInput.setAttribute("multiple",true);
 		}
 		fileInput.addEventListener("change", fileDroppedEventCallback, NO);
 		fileInput.addEventListener("dragleave", dragExitEventCallback, NO);
-	} else {
-		// in the NativeHost app, we need to put the fileInput element inside an iframe
-		iframeElement = document.createElement("iframe");
-		iframeElement.style.backgroundColor = "rgba(0,0,0,0)";
-		iframeElement.style.border = "0px";
-		iframeElement.style.zIndex = "101";
-		iframeElement.style.position = "absolute";
-		iframeElement.src = "about:blank";
+	    [DCFileDropableTargets addObject:fileInput];
 	}
 
 	[self setFileElementVisible:NO];
 
+/*
+	if (fileInput) {
+		if (shouldInsertAsFirstSubview) {
+			if (theView._DOMElement.firstChild) {
+				theView._DOMElement.insertBefore(fileInput, theView._DOMElement.firstChild);
+			} else {
+				theView._DOMElement.appendChild(fileInput);
+			}
+		} else {
+
+			theView._DOMElement.appendChild(fileInput);
+		}
+	}
+*/
+
 	return self;
+}
+
+- (BOOL)validateDraggedFiles:(FileList)files
+{
+    if (![validFileTypes count])
+        return YES;
+
+    for (var i = 0; i < files.length; i++)
+    {
+        // we really can only check the filename :(
+        var filename = files.item(i).fileName,
+            type = [filename pathExtension];
+
+        return [validFileTypes containsObject:type];
+    }
+
+    return YES;
 }
 
 - (void)setFileDropState:(BOOL)visible {
@@ -159,26 +188,7 @@ DCFileDropControllerDropDelegate protocol
 }
 
 - (void)setFileElementVisible:(BOOL)yesNo {
-	if (useEmbeddedFileElement) {
-		if (!fileInput) {
-			return;
-		}
-		if (yesNo || isButton) {
-			fileInput.style.width = "100%";
-			fileInput.style.height = "100%";
-			if (insertAsFirstSubview == YES && domElement.firstChild) {
-				domElement.insertBefore(fileInput, domElement.firstChild);
-			} else {
-				domElement.appendChild(fileInput);
-			}
-		} else {
-			fileInput.style.width = "0%";
-			fileInput.style.height = "0%";
-			if (fileInput.parentNode) {
-				fileInput.parentNode.removeChild(fileInput);
-			}
-		}
-	} else {
+	if (useIframeFileElement) {
 		// in the NativeHost app, we need to put the fileInput element inside an iframe
 		if (!iframeElement) {
 			return;
@@ -186,10 +196,10 @@ DCFileDropControllerDropDelegate protocol
 		if (yesNo || isButton) {
 			iframeElement.style.width = "100%";
 			iframeElement.style.height = "100%";
-			if (insertAsFirstSubview == YES && domElement.firstChild) {
-				domElement.insertBefore(iframeElement, domElement.firstChild);
+			if (insertAsFirstSubview == YES && view._DOMElement.firstChild) {
+				view._DOMElement.insertBefore(iframeElement, view._DOMElement.firstChild);
 			} else {
-				domElement.appendChild(iframeElement);
+				view._DOMElement.appendChild(iframeElement);
 			}
 			window.setTimeout(function() {
 				iframeElement.src = "about:blank";
@@ -204,6 +214,7 @@ DCFileDropControllerDropDelegate protocol
 				fileInput.style.opacity = "0";
 				fileInput.style.background = "#CCFFCC";
 				if (!isWinSafari) {
+					// there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
 					fileInput.setAttribute("multiple",true);
 				}
 				fileInput.addEventListener("change", fileDroppedEventCallback, NO);
@@ -214,6 +225,26 @@ DCFileDropControllerDropDelegate protocol
 			iframeElement.style.height = "0%";
 			if (iframeElement.parentNode) {
 				iframeElement.parentNode.removeChild(iframeElement);
+			}
+		}
+	} else {
+		// use just a file element
+		if (!fileInput) {
+    		return;
+    	}
+		if (yesNo || isButton) {
+			fileInput.style.width = "100%";
+			fileInput.style.height = "100%";
+			if (insertAsFirstSubview == YES && view._DOMElement.firstChild) {
+				view._DOMElement.insertBefore(fileInput, view._DOMElement.firstChild);
+			} else {
+				view._DOMElement.appendChild(fileInput);
+			}
+		} else {
+			fileInput.style.width = "0%";
+			fileInput.style.height = "0%";
+			if (fileInput.parentNode) {
+				fileInput.parentNode.removeChild(fileInput);
 			}
 		}
 	}
@@ -264,10 +295,18 @@ DCFileDropControllerDropDelegate protocol
 
 - (void)processFiles:(CPArray)files {
 	for(var i = 0, len = files.length; i < len; i++) {
+    	if ([uploadManager respondsToSelector:@selector(fileUploadWithFile:uploadURL:)])
+        {
+    		var upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
+
+            if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
+                [dropDelegate fileDropController:self didBeginUpload:upload];
+        }
+        
 		if ([uploadManager respondsToSelector:@selector(fileUploadWithFile:uploadURL:uploadDelegate:userInfo:)]) {
 			[uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL uploadDelegate:uploadDelegate userInfo:userInfo];
-		}
-	}
+		}    
+    }
 }
 
 

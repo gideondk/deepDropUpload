@@ -3,18 +3,17 @@
 /*
 
 DCFileUploadDelegate protocol
-- (void)fileUploadDidBegin:(DCFileUpload *)theController;
-- (void)fileUploadProgressDidChange:(DCFileUpload *)theController;
-- (void)fileUploadDidEnd:(DCFileUpload *)theController;
+- (void)fileUploadDidBegin:(DCFileUpload)theController;
+- (void)fileUploadProgressDidChange:(DCFileUpload)theController;
+- (void)fileUploadDidEnd:(DCFileUpload)theController;
 
 */
 
 @implementation DCFileUpload : CPObject {
-	CPString *name @accessors;
+	CPString name @accessors;
 	float progress @accessors;
 	id delegate @accessors;
-	id uploadDelegate @accessors;
-	CPURL *uploadURL @accessors;
+	CPURL uploadURL @accessors;
 	CPDictionary userInfo @accessors;
 	CPString responseText @accessors;
 	BOOL indeterminate @accessors;
@@ -60,6 +59,7 @@ DCFileUploadDelegate protocol
 
 - (void)processXHR {
 	xhr = new XMLHttpRequest();
+
 	var fileUpload = xhr.upload;
 
 /*
@@ -96,7 +96,13 @@ DCFileUploadDelegate protocol
 		return;
 	}
 
-	xhr.open("POST", [uploadURL absoluteString]);
+    xhr.addEventListener("load", function(evt) {
+        if (xhr.responseText)
+            [self fileUploadDidReceiveResponse:xhr.responseText];
+    }, NO);
+
+	xhr.open("POST", [uploadURL absoluteURL]);
+
 	var formdata = new FormData();
 	formdata.append("document[name]", file.name);
 	//formdata.append("document[document_type]", "image");
@@ -114,18 +120,12 @@ DCFileUploadDelegate protocol
 	if ([delegate respondsToSelector:@selector(fileUploadDidDrop:)]) {
 		[delegate fileUploadDidDrop:self];
 	}
-	if ([uploadDelegate respondsToSelector:@selector(fileUploadDidDrop:)]) {
-		[uploadDelegate fileUploadDidDrop:self];
-	}
 }
 
 - (void)fileUploadDidBegin {
 	isUploading = YES;
 	if ([delegate respondsToSelector:@selector(fileUploadDidBegin:)]) {
 		[delegate fileUploadDidBegin:self];
-	}
-	if ([uploadDelegate respondsToSelector:@selector(fileUploadDidBegin:)]) {
-		[uploadDelegate fileUploadDidBegin:self];
 	}
 }
 
@@ -134,19 +134,18 @@ DCFileUploadDelegate protocol
 	if ([delegate respondsToSelector:@selector(fileUploadProgressDidChange:)]) {
 		[delegate fileUploadProgressDidChange:self];
 	}
-	if ([uploadDelegate respondsToSelector:@selector(fileUploadProgressDidChange:)]) {
-		[uploadDelegate fileUploadProgressDidChange:self];
-	}
 }
 
-- (void)fileUploadDidEnd {
+- (void)fileUploadDidEnd{
 	isUploading = NO;
-	if ([delegate respondsToSelector:@selector(fileUploadDidEnd:)]) {
+	if ([delegate respondsToSelector:@selector(fileUploadDidEnd:)])
 		[delegate fileUploadDidEnd:self];
-	}
-	if ([uploadDelegate respondsToSelector:@selector(fileUploadDidEnd:)]) {
-		[uploadDelegate fileUploadDidEnd:self];
-	}
+}
+
+- (void)fileUploadDidReceiveResponse:(CPString)aResponse
+{
+    if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
+		[delegate fileUpload:self didReceiveResponse:aResponse];
 }
 
 - (BOOL)isUploading {
