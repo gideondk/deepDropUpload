@@ -44,6 +44,22 @@ SharedFileUploadManager = nil;
 	return fileUpload;
 }
 
+- (DCFileUpload)fileUploadWithForm:(id)theForm fileElement:(id)theFileElement uploadURL:(CPURL)theURL {
+	var fileUpload = [[DCFileUpload alloc] initWithForm:theForm fileElement:theFileElement];
+	[fileUpload setDelegate:self];
+	[fileUpload setName:theFileElement.value];
+	[fileUpload setUploadURL:theURL];
+	[fileUpload fileUploadDidDrop];
+	[fileUploads addObject:fileUpload];
+	[self didChange];
+
+	if (concurrent || ![self isUploading]) {
+		[fileUpload begin];
+	}
+
+	return fileUpload;
+}
+
 - (BOOL)isUploading {
 	for (var i = 0; i < [fileUploads count]; i++) {
 		var fileUpload = [fileUploads objectAtIndex:i];

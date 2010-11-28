@@ -22,10 +22,9 @@ if (navigator) {
 
 	DOMElement fileInput;
 	id iframeElement;
-	id dropDelegate;
-	id uploadDelegate @accessors;
+	id dropDelegate @accessors;
 	id uploadManager;
-	id domElement;
+
 	BOOL insertAsFirstSubview @accessors;
 	BOOL isButton @accessors;
 	BOOL useIframeFileElement  @accessors;
@@ -72,9 +71,7 @@ if (navigator) {
 	self = [super init];
 
 	view = theView;
-	domElement = theDomElement;
 	dropDelegate = theDropDelegate;
-	uploadDelegate = theUploadDelegate;
 	uploadURL = theUploadURL;
 	uploadManager = theUploadManager;
 
@@ -96,7 +93,7 @@ if (navigator) {
 
     // this prevents the little plus sign from showing up when you drag over the body.
     // Otherwise the user could be confused where they can drop the file and it would
-    // cause the browser to redirect to the file they just dropped. 
+    // cause the browser to redirect to the file they just dropped.
     window.document.body.addEventListener("dragover", bodyBlockCallback, NO);
 
 	view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
@@ -289,7 +286,7 @@ if (navigator) {
 		[self processFiles:files];
 	}
 
-	// now clear the input 
+	// now clear the input
 	fileInput.value = nil;
 }
 
@@ -302,10 +299,6 @@ if (navigator) {
             if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
                 [dropDelegate fileDropController:self didBeginUpload:upload];
         }
-        
-		if ([uploadManager respondsToSelector:@selector(fileUploadWithFile:uploadURL:uploadDelegate:userInfo:)]) {
-			[uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL uploadDelegate:uploadDelegate userInfo:userInfo];
-		}    
     }
 }
 
@@ -314,7 +307,7 @@ if (navigator) {
 
 - (void)addLegacyForm {
 	_legacyUploadForm = document.createElement("form");
-	
+
 	_legacyUploadForm.method = "POST";
 	_legacyUploadForm.action = "#";
 
@@ -322,24 +315,24 @@ if (navigator) {
 		_legacyUploadForm.encoding = "multipart/form-data";
 	else
 		_legacyUploadForm.enctype = "multipart/form-data";
-	
+
 	_legacyFileUploadElement = document.createElement("input");
-	
+
 	_legacyFileUploadElement.type = "file";
 	_legacyFileUploadElement.name = "file[]";
-	
+
 	_legacyFileUploadElement.onmousedown = function(aDOMEvent)
-	{	 
+	{
 		aDOMEvent = aDOMEvent || window.event;
-		
+
 		var x = aDOMEvent.clientX,
 			y = aDOMEvent.clientY,
 			theWindow = [view window];
-		
+
 		[CPApp sendEvent:[CPEvent mouseEventWithType:CPLeftMouseDown location:[theWindow convertBridgeToBase:CGPointMake(x, y)]
 			modifierFlags:0 timestamp:0 windowNumber:[theWindow windowNumber] context:nil eventNumber:-1 clickCount:1 pressure:0]];
-		[[CPRunLoop currentRunLoop] limitDateForMode:CPDefaultRunLoopMode]; 
-		
+		[[CPRunLoop currentRunLoop] limitDateForMode:CPDefaultRunLoopMode];
+
 		if (document.addEventListener)
 		{
 			document.addEventListener(CPDOMEventMouseUp, _legacyMouseUpCallback, NO);
@@ -364,43 +357,43 @@ if (navigator) {
 			document.detachEvent("on" + CPDOMEventMouseUp, _legacyMouseUpCallback);
 			document.detachEvent("on" + CPDOMEventMouseMoved, _legacyMouseMovedCallback);
 		}
-		
+
 		aDOMEvent = aDOMEvent || window.event;
-		
+
 		var x = aDOMEvent.clientX,
 			y = aDOMEvent.clientY,
 			theWindow = [view window];
-		
+
 		[CPApp sendEvent:[CPEvent mouseEventWithType:CPLeftMouseUp location:[theWindow convertBridgeToBase:CGPointMake(x, y)]
 		   modifierFlags:0 timestamp:0 windowNumber:[theWindow windowNumber] context:nil eventNumber:-1 clickCount:1 pressure:0]];
-		[[CPRunLoop currentRunLoop] limitDateForMode:CPDefaultRunLoopMode]; 
+		[[CPRunLoop currentRunLoop] limitDateForMode:CPDefaultRunLoopMode];
 	}
-	
+
 	_legacyMouseMovedCallback = function(aDOMEvent)
 	{
 		aDOMEvent = aDOMEvent || window.event;
-		
+
 		var x = aDOMEvent.clientX,
 			y = aDOMEvent.clientY,
 			theWindow = [view window];
-		
+
 		[CPApp sendEvent:[CPEvent mouseEventWithType:CPLeftMouseDragged location:[theWindow convertBridgeToBase:CGPointMake(x, y)]
 		   modifierFlags:0 timestamp:0 windowNumber:[theWindow windowNumber] context:nil eventNumber:-1 clickCount:1 pressure:0]];
 	}
-	
+
 	_legacyUploadForm.style.position = "absolute";
 	_legacyUploadForm.style.top = "0px";
 	_legacyUploadForm.style.left = "0px";
 	_legacyUploadForm.style.zIndex = 1000;
-	
+
 	_legacyFileUploadElement.style.opacity = "0";
 	_legacyFileUploadElement.style.filter = "alpha(opacity=0)";
-	
+
 	_legacyUploadForm.style.width = "100%";
 	_legacyUploadForm.style.height = "100%";
-	
+
 	_legacyFileUploadElement.style.fontSize = "1000px";
-	
+
 	if (document.attachEvent)
 	{
 		_legacyFileUploadElement.style.position = "relative";
@@ -409,17 +402,17 @@ if (navigator) {
 		_legacyFileUploadElement.style.width = "1px";
 	}
 	else
-		_legacyFileUploadElement.style.cssFloat = "right";	
-				   
+		_legacyFileUploadElement.style.cssFloat = "right";
+
 	_legacyFileUploadElement.onchange = function()
 	{
 		[self uploadSelectionDidChange: [self selection]];
 	};
-	
+
 	_legacyUploadForm.appendChild(_legacyFileUploadElement);
-	
-	domElement.appendChild(_legacyUploadForm);
-	
+
+	view._DOMElement.appendChild(_legacyUploadForm);
+
 	_legacyParameters = [CPDictionary dictionary];
 }
 
@@ -433,8 +426,9 @@ if (navigator) {
 
 - (void)uploadSelectionDidChange:(CPArray)selection {
 	// create a file upload with the form
-	if ([uploadManager respondsToSelector:@selector(fileUploadWithForm:fileElement:uploadURL:uploadDelegate:userInfo:)]) {
-		[uploadManager fileUploadWithForm:_legacyUploadForm fileElement:_legacyFileUploadElement uploadURL:uploadURL uploadDelegate:uploadDelegate userInfo:userInfo];
+	if ([uploadManager respondsToSelector:@selector(fileUploadWithForm:fileElement:uploadURL:)]) {
+		var upload = [uploadManager fileUploadWithForm:_legacyUploadForm fileElement:_legacyFileUploadElement uploadURL:uploadURL];
+		[upload setUserInfo:userInfo];
 	}
 	[self resetSelection];
 }
