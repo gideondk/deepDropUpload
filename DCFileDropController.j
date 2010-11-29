@@ -152,6 +152,8 @@ if (navigator)
             fileInput.style.left = "0px";
             fileInput.style.backgroundColor = "#00FF00";
             fileInput.style.opacity = "0";
+            // Make sure we go above even special fields when trying to catch drops.
+            fileInput.style.zIndex = 1000;
             if (!isWinSafari)
             {
                 // there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
@@ -294,7 +296,6 @@ if (navigator)
     // check if an internal Cappuccino drag is already happening
     if ([[CPDragServer sharedDragServer] isDragging])
         return;
-
 
     [self setFileDropState:YES];
     [self setFileElementVisible:YES];
