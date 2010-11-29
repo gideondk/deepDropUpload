@@ -46,6 +46,10 @@ DCFileUploadDelegate protocol
 }
 
 - (void)begin {
+    if ([delegate respondsToSelector:@selector(fileUploadWillBegin:)]) {
+		[delegate fileUploadWillBegin:self];
+	}
+
 	if (file) {
 		// upload asynchronously with progress in newer browsers
 		indeterminate = NO;
@@ -62,33 +66,26 @@ DCFileUploadDelegate protocol
 
 	var fileUpload = xhr.upload;
 
-/*
-	xhr.onprogress = function () {
-		console.log("onprogress");
-	};
-*/
-	
 	fileUpload.addEventListener("progress", function(event) {
 		if (event.lengthComputable) {
 			[self setProgress:event.loaded / event.total];
 			[self fileUploadProgressDidChange];
 		}
 	}, false);
-	
+
 	fileUpload.addEventListener("load", function(event) {
-		CPLog("upload done... now need to download response...");
+        if (xhr.responseText)
+        {
+            [self fileUploadDidReceiveResponse:xhr.responseText];
+        }
 	}, false);
-	
+
 	fileUpload.addEventListener("error", function(evt) {
 		CPLog("error: " + evt.code);
 	}, false);
 
 	if (!uploadURL) {
 		return;
-	}
-
-	if ([DCFlllowAPI useTokenAuthenticationMethod]) {
-		uploadURL = [CPURL URLWithString:[[DCFlllowAPI sharedAPI] tokenizedURL:[uploadURL absoluteString]]];
 	}
 
 	if (!FormData) {
@@ -98,20 +95,26 @@ DCFileUploadDelegate protocol
 
     xhr.addEventListener("load", function(evt) {
         if (xhr.responseText)
+        {
             [self fileUploadDidReceiveResponse:xhr.responseText];
+        }
+        [self fileUploadDidEnd];
     }, NO);
 
 	xhr.open("POST", [uploadURL absoluteURL]);
 
-	var formdata = new FormData();
-	formdata.append("document[name]", file.name);
-	//formdata.append("document[document_type]", "image");
-	formdata.append("document[revisions_attributes][0][description]", "");
-	formdata.append("document[revisions_attributes][0][file]", file);
 	xhr.setRequestHeader("If-Modified-Since", "Mon, 26 Jul 1997 05:00:00 GMT");
 	xhr.setRequestHeader("Cache-Control", "no-cache");
 	xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-	xhr.send(formdata);
+
+    var data = file;
+	if ([delegate respondsToSelector:@selector(dataForFileUpload:xhr:file:)]) {
+	    // Give a delegate a chance to swap file with a FormData object with
+	    // additional info.
+		data = [delegate dataForFileUpload:self xhr:xhr file:file];
+	}
+
+    xhr.send(data);
 
 	[self fileUploadDidBegin];
 };
@@ -136,7 +139,8 @@ DCFileUploadDelegate protocol
 	}
 }
 
-- (void)fileUploadDidEnd{
+- (void)fileUploadDidEnd
+{
 	isUploading = NO;
 	if ([delegate respondsToSelector:@selector(fileUploadDidEnd:)])
 		[delegate fileUploadDidEnd:self];
@@ -144,6 +148,8 @@ DCFileUploadDelegate protocol
 
 - (void)fileUploadDidReceiveResponse:(CPString)aResponse
 {
+    console.log(" fileUploadDidReceiveResponse: "+aResponse);
+    responseText = aResponse;
     if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
 		[delegate fileUpload:self didReceiveResponse:aResponse];
 }
@@ -191,17 +197,17 @@ DCFileUploadDelegate protocol
 	if (_DOMIFrameElement) {
 		document.body.removeChild(_DOMIFrameElement);
 		_DOMIFrameElement.onload = nil;
-		_DOMIFrameElement = nil;   
+		_DOMIFrameElement = nil;
 	}
 
 	if (window.attachEvent) {
-		_DOMIFrameElement = document.createElement("<iframe id=\"" + legacyForm.target + "\" name=\"" + legacyForm.target + "\" />");	   
+		_DOMIFrameElement = document.createElement("<iframe id=\"" + legacyForm.target + "\" name=\"" + legacyForm.target + "\" />");
 
 		if(window.location.href.toLowerCase().indexOf("https") === 0)
 			_DOMIFrameElement.src = "javascript:false";
 	} else {
 		_DOMIFrameElement = document.createElement("iframe");
-		_DOMIFrameElement.name = legacyForm.target;	
+		_DOMIFrameElement.name = legacyForm.target;
 	}
 
 	_DOMIFrameElement.style.width = "1px";
@@ -215,7 +221,7 @@ DCFileUploadDelegate protocol
 	_onloadHandler = function() {
 		try {
 			CATCH_EXCEPTIONS = NO;
-			responseText = _DOMIFrameElement.contentWindow.document.body ? _DOMIFrameElement.contentWindow.document.body.innerHTML : 
+			responseText = _DOMIFrameElement.contentWindow.document.body ? _DOMIFrameElement.contentWindow.document.body.innerHTML :
 																			   _DOMIFrameElement.contentWindow.document.documentElement.textContent;
 
 			[self fileUploadDidEnd];
@@ -229,7 +235,7 @@ DCFileUploadDelegate protocol
 		} catch (e) {
 			[self uploadDidFailWithError:e];
 		}
-	}	 
+	}
 
 	if (window.attachEvent) {
 		_DOMIFrameElement.onreadystatechange = function() {
@@ -248,7 +254,7 @@ DCFileUploadDelegate protocol
 - (void)_removeUploadFormElements {
     var index = legacyForm.childNodes.length;
     while(index--)
-        legacyForm.removeChild(legacyForm.childNodes[index]);    
+        legacyForm.removeChild(legacyForm.childNodes[index]);
 }
 
 - (void)uploadDidFailWithError:(id)error {
