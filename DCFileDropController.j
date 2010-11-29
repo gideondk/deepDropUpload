@@ -281,7 +281,6 @@ if (navigator)
     if (!enabled)
         return;
 
-
     [self setFileDropState:NO];
     [self setFileElementVisible:NO];
 
