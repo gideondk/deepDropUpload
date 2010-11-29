@@ -35,7 +35,7 @@ SharedFileUploadManager = nil;
 - (DCFileUpload)fileUploadWithFile:(id)theFile uploadURL:(CPURL)theURL
 {
     var fileUpload = [[DCFileUpload alloc] initWithFile:theFile];
-    [fileUpload setDelegate:self];
+    [fileUpload setUploadManager:self];
     [fileUpload setName:theFile.fileName];
     [fileUpload setUploadURL:theURL];
     [fileUploads addObject:fileUpload];
@@ -50,7 +50,7 @@ SharedFileUploadManager = nil;
 - (DCFileUpload)fileUploadWithForm:(id)theForm fileElement:(id)theFileElement uploadURL:(CPURL)theURL
 {
     var fileUpload = [[DCFileUpload alloc] initWithForm:theForm fileElement:theFileElement];
-    [fileUpload setDelegate:self];
+    [fileUpload setUploadManager:self];
     [fileUpload setName:theFileElement.value];
     [fileUpload setUploadURL:theURL];
     [fileUpload fileUploadDidDrop];

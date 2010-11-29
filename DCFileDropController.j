@@ -309,6 +309,10 @@ if (navigator)
         {
             var upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
 
+            // Make sure the drop delegate will be notified when an upload finishes.
+            [upload setDelegate:dropDelegate];
+            [upload fileUploadDidDrop];
+
             if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
                 [dropDelegate fileDropController:self didBeginUpload:upload];
         }

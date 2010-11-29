@@ -14,6 +14,7 @@ DCFileUploadDelegate protocol
     CPString        name @accessors;
     float           progress @accessors;
     id              delegate @accessors;
+    id              uploadManager @accessors;
     CPURL           uploadURL @accessors;
     CPDictionary    userInfo @accessors;
     CPString        responseText @accessors;
@@ -50,8 +51,8 @@ DCFileUploadDelegate protocol
 
 - (void)begin
 {
-    if ([delegate respondsToSelector:@selector(fileUploadWillBegin:)])
-        [delegate fileUploadWillBegin:self];
+    if ([uploadManager respondsToSelector:@selector(fileUploadWillBegin:)])
+        [uploadManager fileUploadWillBegin:self];
 
     if (file)
     {
@@ -116,11 +117,11 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
     var data = file;
-    if ([delegate respondsToSelector:@selector(dataForFileUpload:xhr:file:)])
+    if ([uploadManager respondsToSelector:@selector(dataForFileUpload:xhr:file:)])
     {
         // Give a delegate a chance to swap file with a FormData object with
         // additional info.
-        data = [delegate dataForFileUpload:self xhr:xhr file:file];
+        data = [uploadManager dataForFileUpload:self xhr:xhr file:file];
     }
 
     xhr.send(data);
@@ -130,6 +131,8 @@ DCFileUploadDelegate protocol
 
 - (void)fileUploadDidDrop
 {
+    if ([uploadManager respondsToSelector:@selector(fileUploadDidDrop:)])
+        [uploadManager fileUploadDidDrop:self];
     if ([delegate respondsToSelector:@selector(fileUploadDidDrop:)])
         [delegate fileUploadDidDrop:self];
 }
@@ -137,6 +140,8 @@ DCFileUploadDelegate protocol
 - (void)fileUploadDidBegin
 {
     isUploading = YES;
+    if ([uploadManager respondsToSelector:@selector(fileUploadDidBegin:)])
+        [uploadManager fileUploadDidBegin:self];
     if ([delegate respondsToSelector:@selector(fileUploadDidBegin:)])
         [delegate fileUploadDidBegin:self];
 }
@@ -144,13 +149,15 @@ DCFileUploadDelegate protocol
 - (void)fileUploadProgressDidChange
 {
     isUploading = YES;
-    if ([delegate respondsToSelector:@selector(fileUploadProgressDidChange:)])
-        [delegate fileUploadProgressDidChange:self];
+    if ([uploadManager respondsToSelector:@selector(fileUploadProgressDidChange:)])
+        [uploadManager fileUploadProgressDidChange:self];
 }
 
 - (void)fileUploadDidEnd
 {
     isUploading = NO;
+    if ([uploadManager respondsToSelector:@selector(fileUploadDidEnd:)])
+        [uploadManager fileUploadDidEnd:self];
     if ([delegate respondsToSelector:@selector(fileUploadDidEnd:)])
         [delegate fileUploadDidEnd:self];
 }
@@ -158,8 +165,8 @@ DCFileUploadDelegate protocol
 - (void)fileUploadDidReceiveResponse:(CPString)aResponse
 {
     responseText = aResponse;
-    if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
-        [delegate fileUpload:self didReceiveResponse:aResponse];
+    if ([uploadManager respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
+        [uploadManager fileUpload:self didReceiveResponse:aResponse];
 }
 
 - (BOOL)isUploading
