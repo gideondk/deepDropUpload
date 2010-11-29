@@ -86,14 +86,44 @@ if (navigator)
 
         var theClass = [self class],
             dragEnterEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingEntered:)),
-            dragEnterEventCallback = function (anEvent) {if (![self validateDraggedFiles:anEvent.dataTransfer.files]){return NO;}else{anEvent.dataTransfer.dropEffect = "copy"; anEvent.stopPropagation(); dragEnterEventImplementation(self, nil, anEvent);}},
-            bodyBlockCallback = function(anEvent){if (![DCFileDropableTargets containsObject:anEvent.toElement] || ([DCFileDropableTargets containsObject:anEvent.toElement] && ![self validateDraggedFiles:anEvent.dataTransfer.files])) {anEvent.dataTransfer.dropEffect = "none"; anEvent.preventDefault(); return NO;}else{return YES;}};
+            dragEnterEventCallback = function (anEvent)
+            {
+                if (![self validateDraggedFiles:anEvent.dataTransfer.files])
+                {
+                    return NO;
+                }
+                else
+                {
+                    anEvent.dataTransfer.dropEffect = "copy";
+                    anEvent.stopPropagation();
+                    dragEnterEventImplementation(self, nil, anEvent);
+                }
+            },
+            bodyBlockCallback = function(anEvent)
+            {
+                if (![DCFileDropableTargets containsObject:anEvent.toElement] || ![self validateDraggedFiles:anEvent.dataTransfer.files])
+                {
+                    anEvent.dataTransfer.dropEffect = "none";
+                    anEvent.preventDefault();
+                    return NO;
+                }
+                else
+                {
+                    return YES;
+                }
+            };
 
         fileDroppedEventImplementation = class_getMethodImplementation(theClass, @selector(fileDropped:));
-        fileDroppedEventCallback = function (anEvent) { fileDroppedEventImplementation(self, nil, anEvent); };
+        fileDroppedEventCallback = function (anEvent)
+        {
+            fileDroppedEventImplementation(self, nil, anEvent);
+        };
 
         dragExitEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingExited:));
-        dragExitEventCallback = function (anEvent) { dragExitEventImplementation(self, nil, anEvent); };
+        dragExitEventCallback = function (anEvent)
+        {
+            dragExitEventImplementation(self, nil, anEvent);
+        };
 
         // this prevents the little plus sign from showing up when you drag over the body.
         // Otherwise the user could be confused where they can drop the file and it would
