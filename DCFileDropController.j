@@ -118,6 +118,9 @@ if (navigator)
 
         [self setFileDropState:NO];
 
+        if (![DCFileDropController platformSupportsDeepDropUpload])
+    		return self;
+
         var theClass = [self class],
             dragEnterEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingEntered:)),
             dragEnterEventCallback = function (anEvent)
