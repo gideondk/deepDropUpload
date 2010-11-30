@@ -191,11 +191,18 @@ DCFileUploadDelegate protocol
     //remove existing parameters
     [self _removeUploadFormElements];
 
-    var _parameters = [CPDictionary dictionaryWithObjectsAndKeys:
-        legacyFileElement.value, "document[name]",
-        //"image", "document[document_type]",
-        "", "document[revisions_attributes][0][description]"
-    ];
+    var _parameters;
+    if ([[uploadManager delegate] respondsToSelector:@selector(legacyFormParametersForFileUpload:fileElement:)])
+    {
+        // This is really clunky. Would be nice to unify with dataForFileUpload:xhr:file somehow.
+        _parameters = [[uploadManager delegate] legacyFormParametersForFileUpload:self fileElement:legacyFileElement];
+    }
+    else
+    {
+        _parameters = [CPDictionary dictionaryWithObjectsAndKeys:
+            legacyFileElement.value, "file"
+        ];
+    }
 
     //append the parameters to the form
     var keys = [_parameters allKeys];
@@ -210,7 +217,6 @@ DCFileUploadDelegate protocol
         legacyForm.appendChild(theElement);
     }
 
-    legacyFileElement.name = "document[revisions_attributes][0][file]";
     legacyForm.appendChild(legacyFileElement);
 
     if (_DOMIFrameElement)
