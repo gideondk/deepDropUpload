@@ -357,17 +357,14 @@ if (navigator)
 {
     for(var i = 0, len = files.length; i < len; i++)
     {
-        if ([uploadManager respondsToSelector:@selector(fileUploadWithFile:uploadURL:)])
-        {
-            var upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
+        var upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
 
-            // Make sure the drop delegate will be notified when an upload finishes.
-            [upload setDelegate:dropDelegate];
-            [upload fileUploadDidDrop];
+        // Make sure the drop delegate will be notified when an upload finishes.
+        [upload setDelegate:dropDelegate];
+        [upload fileUploadDidDrop];
 
-            if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
-                [dropDelegate fileDropController:self didBeginUpload:upload];
-        }
+        if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
+            [dropDelegate fileDropController:self didBeginUpload:upload];
     }
 }
 
@@ -476,7 +473,7 @@ if (navigator)
 
     _legacyFileUploadElement.onchange = function()
     {
-        [self uploadSelectionDidChange: [self selection]];
+        [self uploadSelectionDidChange:[self selection]];
     };
 
     _legacyUploadForm.appendChild(_legacyFileUploadElement);
@@ -500,11 +497,9 @@ if (navigator)
 - (void)uploadSelectionDidChange:(CPArray)selection
 {
     // create a file upload with the form
-    if ([uploadManager respondsToSelector:@selector(fileUploadWithForm:fileElement:uploadURL:)])
-    {
-        var upload = [uploadManager fileUploadWithForm:_legacyUploadForm fileElement:_legacyFileUploadElement uploadURL:uploadURL];
-        [upload setUserInfo:userInfo];
-    }
+    var upload = [uploadManager fileUploadWithForm:_legacyUploadForm fileElement:_legacyFileUploadElement uploadURL:uploadURL delegate:dropDelegate];
+    [upload setUserInfo:userInfo];
+
     [self resetSelection];
 }
 
@@ -512,7 +507,7 @@ if (navigator)
 {
     var selection = [CPArray  array];
 
-    if(_legacyFileUploadElement.files)
+    if (_legacyFileUploadElement.files)
     {
         for(var i = 0; i < _legacyFileUploadElement.files.length; i++)
         {
