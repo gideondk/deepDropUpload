@@ -7,7 +7,20 @@ DCFileDropControllerDropDelegate protocol
 
 */
 
-DCFileDropableTargets = [ ];
+var DCFileDropableTargets = [ ],
+    generalDropBlockerFunction = function(anEvent)
+    {
+        if (![DCFileDropableTargets containsObject:anEvent.toElement])
+        {
+            anEvent.dataTransfer.dropEffect = "none";
+            anEvent.preventDefault();
+            return NO;
+        }
+        else
+        {
+            return YES;
+        }
+    };
 
 isWinSafari = false;
 if (navigator)
@@ -60,6 +73,27 @@ if (navigator)
     return NO;
 }
 
+/*!
+    Call this on every web view in your application to prevent the browser from
+    browsing to files dropped onto non deep drop upload views. This is crucial
+    for deep drop usability: without it the user will occasionally leave the
+    application by accident by dropping a file into a web view.
+
+    Unfortunately this method must be called every time the web view loads.
+*/
++ (void)preventNonDeepDropsInWebView:(CPWebView)aWebView
+{
+    [self _preventNonDeepDropsInElement:[aWebView DOMWindow]];
+}
+
++ (void)_preventNonDeepDropsInElement:(Object)element
+{
+    // this prevents the little plus sign from showing up when you drag over the body.
+    // Otherwise the user could be confused where they can drop the file and it would
+    // cause the browser to redirect to the file they just dropped.
+    element.addEventListener("dragover", generalDropBlockerFunction, NO);
+}
+
 - (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager
 {
     return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:theUploadURL uploadManager:theUploadManager insertAsFirstSubview:NO];
@@ -98,19 +132,6 @@ if (navigator)
                     anEvent.stopPropagation();
                     dragEnterEventImplementation(self, nil, anEvent);
                 }
-            },
-            bodyBlockCallback = function(anEvent)
-            {
-                if (![DCFileDropableTargets containsObject:anEvent.toElement] || ![self validateDraggedFiles:anEvent.dataTransfer.files])
-                {
-                    anEvent.dataTransfer.dropEffect = "none";
-                    anEvent.preventDefault();
-                    return NO;
-                }
-                else
-                {
-                    return YES;
-                }
             };
 
         fileDroppedEventImplementation = class_getMethodImplementation(theClass, @selector(fileDropped:));
@@ -125,10 +146,7 @@ if (navigator)
             dragExitEventImplementation(self, nil, anEvent);
         };
 
-        // this prevents the little plus sign from showing up when you drag over the body.
-        // Otherwise the user could be confused where they can drop the file and it would
-        // cause the browser to redirect to the file they just dropped.
-        window.document.body.addEventListener("dragover", bodyBlockCallback, NO);
+        [DCFileDropController _preventNonDeepDropsInElement:window.document.body];
 
         view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
 
