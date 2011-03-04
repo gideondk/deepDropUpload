@@ -23,8 +23,9 @@ var DCFileDropableTargets = [ ],
     };
 
 isWinSafari = false;
-if (navigator)
-    isWinSafari = (navigator.userAgent.indexOf("Windows") > 0 && navigator.userAgent.indexOf("AppleWebKit") > 0) ? true : false ;
+
+if (typeof navigator !== "undefined")
+    isWinSafari = navigator.userAgent.indexOf("Windows") > 0 && navigator.userAgent.indexOf("AppleWebKit") > 0;
 
 @implementation DCFileDropController : CPObject
 {
