@@ -1,1 +1,7 @@
-/Build/
+syntax: glob
+.DS_Store
+*~
+Build
+Documentation
+*Build
+debug.txt
