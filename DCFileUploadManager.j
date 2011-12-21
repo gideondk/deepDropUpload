@@ -36,7 +36,10 @@ SharedFileUploadManager = nil;
 {
     var fileUpload = [[DCFileUpload alloc] initWithFile:theFile];
     [fileUpload setUploadManager:self];
-    [fileUpload setName:theFile.fileName];
+    if (theFile.fileName)
+        [fileUpload setName:theFile.fileName];
+    else
+        [fileUpload setName:theFile.name];
     [fileUpload setUploadURL:theURL];
     [fileUploads addObject:fileUpload];
     [self didChange];
@@ -111,6 +114,7 @@ SharedFileUploadManager = nil;
 
 - (void)fileUpload:(DCFileUpload)anUpload didReceiveResponse:(CPString)aString
 {
+    [fileUploads removeObject:anUpload];
     if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
         [delegate fileUpload:self didReceiveResponse:aString];
 }
@@ -125,6 +129,7 @@ SharedFileUploadManager = nil;
 {
     if ([delegate respondsToSelector:@selector(dataForFileUpload:xhr:file:)])
         return [delegate dataForFileUpload:theFileUpload xhr:anXhrObject file:aFile];
+    else return aFile;
 }
 
 - (void)fileUploadWillBegin:(DCFileUploadDelegates)theFileUpload

@@ -115,6 +115,12 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("If-Modified-Since", "Mon, 26 Jul 1997 05:00:00 GMT");
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    if (file.fileName)
+        xhr.setRequestHeader("X-File-Name", file.fileName);
+    else
+        xhr.setRequestHeader("X-File-Name", file.name);
+    xhr.setRequestHeader("X-File-Size", file.fileSize);
+ //   xhr.setRequestHeader("Content-Type", "application/octet-stream");
 
     var data = file;
     if ([uploadManager respondsToSelector:@selector(dataForFileUpload:xhr:file:)])

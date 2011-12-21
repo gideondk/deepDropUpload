@@ -24,6 +24,11 @@ var DCFileDropableTargets = [ ],
 
 isWinSafari = false;
 
+isFirefox = false;
+
+if ((/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)))
+    isFirefox = true;
+
 if (typeof navigator !== "undefined")
     isWinSafari = navigator.userAgent.indexOf("Windows") > 0 && navigator.userAgent.indexOf("AppleWebKit") > 0;
 
@@ -95,6 +100,11 @@ if (typeof navigator !== "undefined")
     element.addEventListener("dragover", generalDropBlockerFunction, NO);
 }
 
+- (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate targetObjectClass:(class)theClass uploadManager:(id)theUploadManager {
+    var uploadPath = [theClass rawUploadPath];
+    return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:uploadPath uploadManager:theUploadManager insertAsFirstSubview:YES];
+}
+
 - (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager
 {
     return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:theUploadURL uploadManager:theUploadManager insertAsFirstSubview:NO];
@@ -109,6 +119,7 @@ if (typeof navigator !== "undefined")
 {
     if (self = [super init])
     {
+        enabled = YES;
         view = theView;
         dropDelegate = theDropDelegate;
         uploadURL = theUploadURL;
@@ -120,7 +131,9 @@ if (typeof navigator !== "undefined")
         [self setFileDropState:NO];
 
         if (![DCFileDropController platformSupportsDeepDropUpload])
+        {
     		return self;
+        }
 
         var theClass = [self class],
             dragEnterEventImplementation = class_getMethodImplementation(theClass, @selector(fileDraggingEntered:)),
@@ -152,7 +165,8 @@ if (typeof navigator !== "undefined")
 
         [DCFileDropController _preventNonDeepDropsInElement:window.document.body];
 
-        view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
+        if (!isFirefox)
+            view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
 
         if (useIframeFileElement)
         {
@@ -172,8 +186,10 @@ if (typeof navigator !== "undefined")
             fileInput.style.position = "absolute";
             fileInput.style.top = "0px";
             fileInput.style.left = "0px";
-            fileInput.style.backgroundColor = "#00FF00";
+            fileInput.style.backgroundColor = "#666";
             fileInput.style.opacity = "0";
+            fileInput.size = 999999;
+
             // Make sure we go above even special fields when trying to catch drops.
             fileInput.style.zIndex = 1000;
             if (!isWinSafari)
@@ -182,7 +198,7 @@ if (typeof navigator !== "undefined")
                 fileInput.setAttribute("multiple",true);
             }
             fileInput.addEventListener("change", fileDroppedEventCallback, NO);
-            fileInput.addEventListener("dragleave", dragExitEventCallback, NO);
+            fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
             [DCFileDropableTargets addObject:fileInput];
         }
 
