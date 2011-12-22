@@ -199,6 +199,7 @@ if (typeof navigator !== "undefined")
             }
             fileInput.addEventListener("change", fileDroppedEventCallback, NO);
             fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
+            fileInput.addEventListener("dragleave", dragExitEventCallback, NO);
             [DCFileDropableTargets addObject:fileInput];
         }
 

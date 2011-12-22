@@ -120,7 +120,7 @@ DCFileUploadDelegate protocol
     else
         xhr.setRequestHeader("X-File-Name", file.name);
     xhr.setRequestHeader("X-File-Size", file.fileSize);
- //   xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
 
     var data = file;
     if ([uploadManager respondsToSelector:@selector(dataForFileUpload:xhr:file:)])
