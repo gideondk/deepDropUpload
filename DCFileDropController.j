@@ -186,9 +186,8 @@ if (typeof navigator !== "undefined")
             fileInput.style.position = "absolute";
             fileInput.style.top = "0px";
             fileInput.style.left = "0px";
-            fileInput.style.backgroundColor = "#666";
+            fileInput.style.backgroundColor = "#00FF00";
             fileInput.style.opacity = "0";
-            fileInput.size = 999999;
 
             // Make sure we go above even special fields when trying to catch drops.
             fileInput.style.zIndex = 1000;
@@ -200,6 +199,7 @@ if (typeof navigator !== "undefined")
             fileInput.addEventListener("change", fileDroppedEventCallback, NO);
             fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
             fileInput.addEventListener("dragleave", dragExitEventCallback, NO);
+
             [DCFileDropableTargets addObject:fileInput];
         }
 
