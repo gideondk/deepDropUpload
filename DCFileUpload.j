@@ -23,6 +23,7 @@ DCFileUploadDelegate protocol
     id              file;
     id              xhr;
     BOOL            isUploading;
+    CPString        authorizationHeader @accessors;
 
     // legacy support
     id              legacyForm;
@@ -121,6 +122,7 @@ DCFileUploadDelegate protocol
         xhr.setRequestHeader("X-File-Name", file.name);
     xhr.setRequestHeader("X-File-Size", file.fileSize);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.setRequestHeader("Authorization", authorizationHeader);
 
     var data = file;
     if ([uploadManager respondsToSelector:@selector(dataForFileUpload:xhr:file:)])

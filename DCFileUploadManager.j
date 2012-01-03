@@ -13,6 +13,8 @@ SharedFileUploadManager = nil;
 @implementation DCFileUploadManager : CPObject
 {
     CPArray fileUploads @accessors;
+    CPString authorizationHeader @accessors;
+
     id      delegate @accessors;
     BOOL    concurrent @accessors; // YES to make files upload at the same time.  NO (default) to upload one at a time.
 }
@@ -35,6 +37,7 @@ SharedFileUploadManager = nil;
 - (DCFileUpload)fileUploadWithFile:(id)theFile uploadURL:(CPURL)theURL
 {
     var fileUpload = [[DCFileUpload alloc] initWithFile:theFile];
+    [fileUpload setAuthorizationHeader:authorizationHeader];
     [fileUpload setUploadManager:self];
     if (theFile.fileName)
         [fileUpload setName:theFile.fileName];
