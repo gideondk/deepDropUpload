@@ -61,6 +61,8 @@ if (typeof navigator !== "undefined")
     id _legacyFileUploadElement;
     function _legacyMouseMovedCallback;
     function _legacyMouseUpCallback;
+
+    CPString        authorizationHeader @accessors;
 }
 
 + (BOOL)platformSupportsDeepDropUpload
@@ -224,6 +226,12 @@ if (typeof navigator !== "undefined")
     }
 
     return YES;
+}
+
+- (void)setAuthorizationHeader:(CPString)aHeader
+{
+    authorizationHeader = aHeader;
+    [uploadManager setAuthorizationHeader:aHeader];
 }
 
 - (void)setFileDropState:(BOOL)visible
