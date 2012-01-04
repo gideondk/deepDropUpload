@@ -12,7 +12,7 @@ var ENV = require("system").env,
     task = JAKE.task,
     FileList = JAKE.FileList,
     app = require("cappuccino/jake").app,
-    configuration = ENV["CONFIG"] || ENV["CONFIGURATION"] || ENV["c"] || "Debug",
+    configuration = ENV["CONFIG"] || ENV["CONFIGURATION"] || ENV["c"] || "Release",
     OS = require("os");
 
 app ("NewApplication", function(task)
