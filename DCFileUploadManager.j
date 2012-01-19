@@ -53,6 +53,23 @@ SharedFileUploadManager = nil;
     return fileUpload;
 }
 
+- (DCFileUpload)fileUploadWithBlob:(id)theBlob name:(CPString)aName uploadURL:(CPURL)theURL
+{
+    var fileUpload = [[DCFileUpload alloc] initWithBlob:theBlob andName:aName];
+    [fileUpload setAuthorizationHeader:authorizationHeader];
+    [fileUpload setUploadManager:self];
+
+    [fileUpload setName:aName];
+    [fileUpload setUploadURL:theURL];
+    [fileUploads addObject:fileUpload];
+    [self didChange];
+
+    if (concurrent || ![self isUploading])
+        [fileUpload begin];
+
+    return fileUpload;
+}
+
 - (DCFileUpload)fileUploadWithForm:(id)theForm fileElement:(id)theFileElement uploadURL:(CPURL)theURL delegate:(id)aDelegate
 {
     var fileUpload = [[DCFileUpload alloc] initWithForm:theForm fileElement:theFileElement];

@@ -29,16 +29,34 @@ DCFileUploadDelegate protocol
     id              legacyForm;
     id              legacyFileElement;
     DOMElement      _DOMIFrameElement;
+
+    var             fileName;
+    var             fileSize;
 }
 
 - (id)initWithFile:(id)theFile
 {
     self = [super init];
     file = theFile;
+    fileSize = file.fileSize;
+    [self retrieveFileName];
+
     progress = 0.0;
     isUploading = NO;
     return self;
 }
+
+- (id)initWithBlob:(id)theBlob andName:(CPString)aName
+{
+    self = [super init];
+    file = theBlob;
+    fileSize = theBlob.size;
+    fileName = aName;
+    progress = 0.0;
+    isUploading = NO;
+    return self;
+}
+
 
 - (id)initWithForm:(id)theForm fileElement:(id)theFileElement
 {
@@ -48,6 +66,14 @@ DCFileUploadDelegate protocol
     progress = 0.0;
     isUploading = NO;
     return self;
+}
+
+- (void)retrieveFileName
+{
+    if (file.fileName)
+        fileName = file.fileName;
+    else
+        fileName = file.name;
 }
 
 - (void)begin
@@ -116,11 +142,9 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("If-Modified-Since", "Mon, 26 Jul 1997 05:00:00 GMT");
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-    if (file.fileName)
-        xhr.setRequestHeader("X-File-Name", file.fileName);
-    else
-        xhr.setRequestHeader("X-File-Name", file.name);
-    xhr.setRequestHeader("X-File-Size", file.fileSize);
+
+    xhr.setRequestHeader("X-File-Name", fileName);
+    xhr.setRequestHeader("X-File-Size", fileSize);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
     xhr.setRequestHeader("Authorization", authorizationHeader);
 
@@ -175,6 +199,9 @@ DCFileUploadDelegate protocol
     responseText = aResponse;
     if ([uploadManager respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
         [uploadManager fileUpload:self didReceiveResponse:aResponse];
+
+    if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
+        [delegate fileUpload:self didReceiveResponse:aResponse];
 }
 
 - (BOOL)isUploading
