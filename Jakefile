@@ -15,13 +15,13 @@ var ENV = require("system").env,
     configuration = ENV["CONFIG"] || ENV["CONFIGURATION"] || ENV["c"] || "Release",
     OS = require("os");
 
-app ("NewApplication", function(task)
+app ("DeepDropUpload", function(task)
 {
-    task.setBuildIntermediatesPath(FILE.join("Build", "NewApplication.build", configuration));
+    task.setBuildIntermediatesPath(FILE.join("Build", "DeepDropUpload.build", configuration));
     task.setBuildPath(FILE.join("Build", configuration));
 
-    task.setProductName("NewApplication");
-    task.setIdentifier("com.yourcompany.NewApplication");
+    task.setProductName("DeepDropUpload");
+    task.setIdentifier("com.yourcompany.DeepDropUpload");
     task.setVersion("1.0");
     task.setAuthor("Your Company");
     task.setEmail("feedback @nospam@ yourcompany.com");
@@ -40,11 +40,11 @@ app ("NewApplication", function(task)
 function printResults(configuration)
 {
     print("----------------------------");
-    print(configuration+" app built at path: "+FILE.join("Build", configuration, "NewApplication"));
+    print(configuration+" app built at path: "+FILE.join("Build", configuration, "DeepDropUpload"));
     print("----------------------------");
 }
 
-task ("default", ["NewApplication"], function()
+task ("default", ["DeepDropUpload"], function()
 {
     printResults(configuration);
 });
@@ -65,17 +65,17 @@ task ("release", function()
 
 task ("run", ["debug"], function()
 {
-    OS.system(["open", FILE.join("Build", "Debug", "NewApplication", "index.html")]);
+    OS.system(["open", FILE.join("Build", "Debug", "DeepDropUpload", "index.html")]);
 });
 
 task ("run-release", ["release"], function()
 {
-    OS.system(["open", FILE.join("Build", "Release", "NewApplication", "index.html")]);
+    OS.system(["open", FILE.join("Build", "Release", "DeepDropUpload", "index.html")]);
 });
 
 task ("deploy", ["release"], function()
 {
-    FILE.mkdirs(FILE.join("Build", "Deployment", "NewApplication"));
-    OS.system(["press", "-f", FILE.join("Build", "Release", "NewApplication"), FILE.join("Build", "Deployment", "NewApplication")]);
+    FILE.mkdirs(FILE.join("Build", "Deployment", "DeepDropUpload"));
+    OS.system(["press", "-f", FILE.join("Build", "Release", "DeepDropUpload"), FILE.join("Build", "Deployment", "DeepDropUpload")]);
     printResults("Deployment")
 });
