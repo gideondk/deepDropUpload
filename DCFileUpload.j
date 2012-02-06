@@ -12,6 +12,7 @@ DCFileUploadDelegate protocol
 @implementation DCFileUpload : CPObject
 {
     CPString        name @accessors;
+    CPString        remoteId @accessors;
     float           progress @accessors;
     id              delegate @accessors;
     id              uploadManager @accessors;
@@ -19,6 +20,7 @@ DCFileUploadDelegate protocol
     CPDictionary    userInfo @accessors;
     CPString        responseText @accessors;
     BOOL            indeterminate @accessors;
+    class             uploadObjectClass @accessors;
 
     id              file;
     id              xhr;
@@ -143,6 +145,7 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
+    xhr.setRequestHeader("X-Remote-Id", remoteId);
     xhr.setRequestHeader("X-File-Name", fileName);
     xhr.setRequestHeader("X-File-Size", fileSize);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");

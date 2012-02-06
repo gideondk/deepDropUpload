@@ -49,6 +49,7 @@ if (typeof navigator !== "undefined")
     BOOL useIframeFileElement  @accessors;
 
     CPArray validFileTypes @accessors;
+    class uploadObjectClass;
 
     id fileDroppedEventImplementation;
     id fileDroppedEventCallback;
@@ -104,7 +105,9 @@ if (typeof navigator !== "undefined")
 
 - (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate targetObjectClass:(class)theClass uploadManager:(id)theUploadManager {
     var uploadPath = [theClass rawUploadPath];
-    return [self initWithView:theView dropDelegate:theDropDelegate uploadURL:uploadPath uploadManager:theUploadManager insertAsFirstSubview:YES];
+    var dropController = [self initWithView:theView dropDelegate:theDropDelegate uploadURL:uploadPath uploadManager:theUploadManager insertAsFirstSubview:YES];
+    uploadObjectClass = theClass;
+    return dropController;
 }
 
 - (id)initWithView:(CPView)theView dropDelegate:(id)theDropDelegate uploadURL:(CPURL)theUploadURL uploadManager:(id)theUploadManager
@@ -383,8 +386,17 @@ if (typeof navigator !== "undefined")
 {
     for(var i = 0, len = files.length; i < len; i++)
     {
-        var upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
-
+        var upload;
+        if (uploadObjectClass)
+            upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL andObjectClass:uploadObjectClass];
+        else
+            upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
+        
+        if ([dropDelegate respondsToSelector:@selector(prepareUpload:)])
+            [dropDelegate prepareUpload:upload];
+        
+        [uploadManager fileUploadIsReady:upload];
+        
         // Make sure the drop delegate will be notified when an upload finishes.
         [upload setDelegate:dropDelegate];
         [upload fileUploadDidDrop];

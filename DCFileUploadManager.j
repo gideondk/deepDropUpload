@@ -30,8 +30,36 @@ SharedFileUploadManager = nil;
 - (id)init
 {
     self = [super init];
+    concurrent = YES;
     fileUploads = [[CPArray alloc] init];
     return self;
+}
+
+- (void)fileUploadIsReady:(id)theFileUpload
+{
+    [delegate fileUploadManagerDidAddUpload:theFileUpload];
+    if (concurrent || ![self isUploading])
+         [theFileUpload begin];
+}
+
+- (DCFileUpload)fileUploadWithFile:(id)theFile uploadURL:(CPURL)theURL andObjectClass:(class)aObjectClass
+{
+    var fileUpload = [[DCFileUpload alloc] initWithFile:theFile];
+    [fileUpload setAuthorizationHeader:authorizationHeader];
+    [fileUpload setUploadManager:self];
+    [fileUpload setUploadObjectClass:aObjectClass]
+    if (theFile.fileName)
+        [fileUpload setName:theFile.fileName];
+    else
+        [fileUpload setName:theFile.name];
+    [fileUpload setUploadURL:theURL];
+    [fileUploads addObject:fileUpload];
+    [self didChange];
+    // if (concurrent || ![self isUploading])
+    //     [fileUpload begin];
+    
+    return fileUpload;
+
 }
 
 - (DCFileUpload)fileUploadWithFile:(id)theFile uploadURL:(CPURL)theURL
@@ -46,9 +74,8 @@ SharedFileUploadManager = nil;
     [fileUpload setUploadURL:theURL];
     [fileUploads addObject:fileUpload];
     [self didChange];
-
-    if (concurrent || ![self isUploading])
-        [fileUpload begin];
+    // if (concurrent || ![self isUploading])
+    //     [fileUpload begin];
 
     return fileUpload;
 }
