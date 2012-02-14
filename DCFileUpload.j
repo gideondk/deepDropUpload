@@ -32,7 +32,7 @@ DCFileUploadDelegate protocol
     id              legacyFileElement;
     DOMElement      _DOMIFrameElement;
 
-    var             fileName;
+    var             fileName @accessors;
     var             fileSize;
 }
 
@@ -145,7 +145,8 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("Cache-Control", "no-cache");
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
-    xhr.setRequestHeader("X-Remote-Id", remoteId);
+    var postParams = {"remote_id": remoteId}
+    xhr.setRequestHeader("X-Query-Params", JSON.stringify(postParams));
     xhr.setRequestHeader("X-File-Name", fileName);
     xhr.setRequestHeader("X-File-Size", fileSize);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");

@@ -30,7 +30,7 @@ SharedFileUploadManager = nil;
 - (id)init
 {
     self = [super init];
-    concurrent = YES;
+    concurrent = NO;
     fileUploads = [[CPArray alloc] init];
     return self;
 }
