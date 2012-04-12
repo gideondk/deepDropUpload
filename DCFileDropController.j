@@ -159,6 +159,8 @@ if (typeof navigator !== "undefined")
         fileDroppedEventImplementation = class_getMethodImplementation(theClass, @selector(fileDropped:));
         fileDroppedEventCallback = function (anEvent)
         {
+            anEvent.preventDefault();
+            anEvent.stopPropagation();
             fileDroppedEventImplementation(self, nil, anEvent);
         };
 
@@ -168,11 +170,18 @@ if (typeof navigator !== "undefined")
             dragExitEventImplementation(self, nil, anEvent);
         };
 
+        dragOverEventCallback = function (anEvent)
+        {
+            anEvent.preventDefault();
+            anEvent.stopPropagation();
+        };
+
         [DCFileDropController _preventNonDeepDropsInElement:window.document.body];
 
-        if (!isFirefox)
-            view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
-
+        // if (!isFirefox)
+        //     view._DOMElement.addEventListener("dragenter", dragEnterEventCallback, NO);
+        // else
+        view._DOMElement.addEventListener("dragover", dragEnterEventCallback, NO);
         if (useIframeFileElement)
         {
             // in the NativeHost app, we need to put the fileInput element inside an iframe
@@ -185,8 +194,8 @@ if (typeof navigator !== "undefined")
         }
         else
         {
-            fileInput = document.createElement("input");
-            fileInput.type = "file";
+            fileInput = document.createElement("div");
+            //fileInput.type = "file";
             fileInput.id = "filesUpload";
             fileInput.style.position = "absolute";
             fileInput.style.top = "0px";
@@ -201,9 +210,10 @@ if (typeof navigator !== "undefined")
                 // there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
                 fileInput.setAttribute("multiple",true);
             }
-            fileInput.addEventListener("change", fileDroppedEventCallback, NO);
+
+            fileInput.addEventListener("drop", fileDroppedEventCallback, NO);
             fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
-            fileInput.addEventListener("dragleave", dragExitEventCallback, NO);
+            fileInput.addEventListener("dragover", dragOverEventCallback, NO);
 
             [DCFileDropableTargets addObject:fileInput];
         }
@@ -212,6 +222,12 @@ if (typeof navigator !== "undefined")
 }
 
     return self;
+}
+
+- (void)setAuthorizationHeader:(CPString)aHeader
+{
+    authorizationHeader = aHeader;
+    [uploadManager setAuthorizationHeader:aHeader];
 }
 
 - (BOOL)validateDraggedFiles:(FileList)files
@@ -231,12 +247,6 @@ if (typeof navigator !== "undefined")
     return YES;
 }
 
-- (void)setAuthorizationHeader:(CPString)aHeader
-{
-    authorizationHeader = aHeader;
-    [uploadManager setAuthorizationHeader:aHeader];
-}
-
 - (void)setFileDropState:(BOOL)visible
 {
     if ([dropDelegate respondsToSelector:@selector(fileDropUploadController:setState:)])
@@ -248,8 +258,65 @@ if (typeof navigator !== "undefined")
     isButton = shouldBeButton;
     if ([DCFileDropController platformSupportsDeepDropUpload])
     {
-        // it's a new browser that supports the deep drop upload with progress
-        [self setFileElementVisible:isButton];
+        if (isButton)
+        {
+            // it's a new browser that supports the deep drop upload with progress
+            if (fileInput)
+                [DCFileDropableTargets removeObject:fileInput];
+
+            fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.id = "filesUpload";
+            fileInput.style.position = "absolute";
+            fileInput.style.top = "0px";
+            fileInput.style.left = "0px";
+            fileInput.style.backgroundColor = "#00FF00";
+            fileInput.style.opacity = "0";
+
+            // Make sure we go above even special fields when trying to catch drops.
+            fileInput.style.zIndex = 1000;
+            if (!isWinSafari)
+            {
+                // there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
+                fileInput.setAttribute("multiple",true);
+            }
+
+            fileInput.addEventListener("change", fileDroppedEventCallback, NO);
+            fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
+            fileInput.addEventListener("dragover", dragOverEventCallback, NO);
+
+            [DCFileDropableTargets addObject:fileInput];
+            [self setFileElementVisible:YES];
+        }
+        else
+        {
+            if (fileInput)
+                [DCFileDropableTargets removeObject:fileInput];
+
+            fileInput = document.createElement("div");
+            //fileInput.type = "file";
+            fileInput.id = "filesUpload";
+            fileInput.style.position = "absolute";
+            fileInput.style.top = "0px";
+            fileInput.style.left = "0px";
+            fileInput.style.backgroundColor = "#00FF00";
+            fileInput.style.opacity = "0";
+
+            // Make sure we go above even special fields when trying to catch drops.
+            fileInput.style.zIndex = 1000;
+            if (!isWinSafari)
+            {
+                // there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
+                fileInput.setAttribute("multiple",true);
+            }
+
+            fileInput.addEventListener("drop", fileDroppedEventCallback, NO);
+            fileInput.addEventListener("dragexit", dragExitEventCallback, NO);
+            fileInput.addEventListener("dragover", dragOverEventCallback, NO);
+
+            [DCFileDropableTargets addObject:fileInput];
+            [self setFileElementVisible:NO];
+        }
     }
     else
     {
@@ -296,7 +363,8 @@ if (typeof navigator !== "undefined")
                 fileInput.style.width = "100%";
                 fileInput.style.height = "100%";
                 fileInput.style.opacity = "0";
-                fileInput.style.background = "#CCFFCC";
+
+                fileInput.style.background = "#000";
                 if (!isWinSafari) {
                     // there seems to be a bug in the Windows version of Safari with multiple files, where all X number of files will be the same file.
                     fileInput.setAttribute("multiple",true);
@@ -324,9 +392,13 @@ if (typeof navigator !== "undefined")
             fileInput.style.width = "100%";
             fileInput.style.height = "100%";
             if (insertAsFirstSubview == YES && view._DOMElement.firstChild)
+            {
                 view._DOMElement.insertBefore(fileInput, view._DOMElement.firstChild);
+            }
             else
+            {
                 view._DOMElement.appendChild(fileInput);
+            }
         }
         else
         {
@@ -391,12 +463,12 @@ if (typeof navigator !== "undefined")
             upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL andObjectClass:uploadObjectClass];
         else
             upload = [uploadManager fileUploadWithFile:files[i] uploadURL:uploadURL];
-        
+
         if ([dropDelegate respondsToSelector:@selector(prepareUpload:)])
             [dropDelegate prepareUpload:upload];
-        
+
         [uploadManager fileUploadIsReady:upload];
-        
+
         // Make sure the drop delegate will be notified when an upload finishes.
         [upload setDelegate:dropDelegate];
         [upload fileUploadDidDrop];

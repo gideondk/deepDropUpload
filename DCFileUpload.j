@@ -107,16 +107,19 @@ DCFileUploadDelegate protocol
     {
         if (event.lengthComputable)
         {
+            console.log(event.loaded / event.total);
             [self setProgress:event.loaded / event.total];
             [self fileUploadProgressDidChange];
         }
     }, false);
 
-    fileUpload.addEventListener("load", function(event)
-    {
-        if (xhr.responseText)
-            [self fileUploadDidReceiveResponse:xhr.responseText];
-    }, false);
+    // fileUpload.addEventListener("load", function(event)
+    // {
+    //     console.log("Finished fileUpload");
+    //     if (xhr.responseText)
+    //         [self fileUploadDidReceiveResponse:xhr.responseText];
+
+    // }, false);
 
     fileUpload.addEventListener("error", function(evt) {
         CPLog("error: " + evt.code);
@@ -133,6 +136,7 @@ DCFileUploadDelegate protocol
 
     xhr.addEventListener("load", function(evt)
     {
+        //console.log("Finished XHR");
         if (xhr.responseText)
             [self fileUploadDidReceiveResponse:xhr.responseText];
 
