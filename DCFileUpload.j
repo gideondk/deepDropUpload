@@ -107,7 +107,6 @@ DCFileUploadDelegate protocol
     {
         if (event.lengthComputable)
         {
-            console.log(event.loaded / event.total);
             [self setProgress:event.loaded / event.total];
             [self fileUploadProgressDidChange];
         }
@@ -154,7 +153,7 @@ DCFileUploadDelegate protocol
     xhr.setRequestHeader("X-File-Name", fileName);
     xhr.setRequestHeader("X-File-Size", fileSize);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
-    xhr.setRequestHeader("Authorization", authorizationHeader);
+    xhr.setRequestHeader("X-Authenticated", authorizationHeader);
 
     var data = file;
     if ([uploadManager respondsToSelector:@selector(dataForFileUpload:xhr:file:)])

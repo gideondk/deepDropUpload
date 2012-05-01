@@ -57,7 +57,7 @@ SharedFileUploadManager = nil;
     [self didChange];
     // if (concurrent || ![self isUploading])
     //     [fileUpload begin];
-    
+
     return fileUpload;
 
 }
@@ -163,7 +163,7 @@ SharedFileUploadManager = nil;
 {
     [fileUploads removeObject:anUpload];
     if ([delegate respondsToSelector:@selector(fileUpload:didReceiveResponse:)])
-        [delegate fileUpload:self didReceiveResponse:aString];
+        [delegate fileUpload:anUpload didReceiveResponse:aString];
 }
 
 - (void)didChange
