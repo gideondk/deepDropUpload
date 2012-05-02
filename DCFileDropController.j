@@ -467,10 +467,10 @@ if (typeof navigator !== "undefined")
         if ([dropDelegate respondsToSelector:@selector(prepareUpload:)])
             [dropDelegate prepareUpload:upload];
 
+        [upload setDelegate:dropDelegate];
         [uploadManager fileUploadIsReady:upload];
 
         // Make sure the drop delegate will be notified when an upload finishes.
-        [upload setDelegate:dropDelegate];
         [upload fileUploadDidDrop];
 
         if ([dropDelegate respondsToSelector:@selector(fileDropController:didBeginUpload:)])
