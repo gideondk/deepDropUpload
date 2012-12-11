@@ -26,8 +26,9 @@ isWinSafari = false;
 
 isFirefox = false;
 
-if ((/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)))
-    isFirefox = true;
+if (typeof navigator !== "undefined")
+    if ((/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)))
+        isFirefox = true;
 
 if (typeof navigator !== "undefined")
     isWinSafari = navigator.userAgent.indexOf("Windows") > 0 && navigator.userAgent.indexOf("AppleWebKit") > 0;
